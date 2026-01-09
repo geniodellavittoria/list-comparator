@@ -11,6 +11,7 @@ interface ComparisonResult {
 function App() {
   const [leftList, setLeftList] = useState('');
   const [rightList, setRightList] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'added' | 'removed' | 'moved' | 'unchanged'>('all');
 
   const comparisonResults = useMemo(() => {
     if (!leftList.trim() && !rightList.trim()) return [];
@@ -89,6 +90,11 @@ function App() {
     setLeftList('Apple\nBanana\nCherry\nDate\nEldberry\nFig\nGrape');
     setRightList('Apple\nCherry\nBanana\nDate\nHoneydew\nFig\nKiwi');
   };
+
+  const filteredResults = useMemo(() => {
+    if (activeFilter === 'all') return comparisonResults;
+    return comparisonResults.filter(r => r.type === activeFilter);
+  }, [comparisonResults, activeFilter]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -198,12 +204,74 @@ function App() {
         {comparisonResults.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800">Detailed Comparison</h3>
-              <p className="text-sm text-gray-600 mt-1">Line-by-line analysis of changes</p>
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Detailed Comparison</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {activeFilter === 'all' ? 'Line-by-line analysis of changes' : `Showing ${activeFilter} changes`}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setActiveFilter('all')}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 text-sm ${
+                    activeFilter === 'all'
+                      ? 'bg-gray-800 text-white'
+                      : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setActiveFilter('removed')}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 text-sm ${
+                    activeFilter === 'removed'
+                      ? 'bg-red-600 text-white'
+                      : 'bg-red-100 text-red-800 hover:bg-red-200'
+                  }`}
+                >
+                  Removed ({stats.removed})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('added')}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 text-sm ${
+                    activeFilter === 'added'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-green-100 text-green-800 hover:bg-green-200'
+                  }`}
+                >
+                  Added ({stats.added})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('moved')}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 text-sm ${
+                    activeFilter === 'moved'
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                  }`}
+                >
+                  Repositioned ({stats.moved})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('unchanged')}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 text-sm ${
+                    activeFilter === 'unchanged'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                  }`}
+                >
+                  Unchanged ({stats.unchanged})
+                </button>
+              </div>
             </div>
-            
+
             <div className="max-h-96 overflow-y-auto">
-              {comparisonResults.map((result, index) => (
+              {filteredResults.length === 0 ? (
+                <div className="px-6 py-8 text-center text-gray-500">
+                  <p>No {activeFilter === 'all' ? 'changes' : activeFilter + ' items'} found</p>
+                </div>
+              ) : (
+              filteredResults.map((result, index) => (
                 <div
                   key={index}
                   className={`px-6 py-3 border-b border-gray-100 transition-colors duration-200 hover:bg-gray-50 ${
@@ -276,7 +344,7 @@ function App() {
                     </div>
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         )}
